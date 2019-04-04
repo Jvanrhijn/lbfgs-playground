@@ -7,6 +7,4 @@ project(lbfgs_playground)
 set(TARGET lbfgs_pg)
 
 add_subdirectory(lib)
-
-add_executable(${TARGET} main.f90)
-target_link_libraries(${TARGET} LBFGS)
+add_subdirectory(src)
