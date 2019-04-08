@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0.2)
 
+include_directories(modules)
+set(CMAKE_Fortran_MODULE_DIRECTORY modules)
+file(GLOB MODULE_FILES "modules/*.f90")
+
 set(TARGET lbfgs_test)
 
-add_executable(${TARGET} main.f90 numeric_kinds.f90)
-target_link_libraries(${TARGET} LBFGS numeric_kinds)
+add_executable(${TARGET} main.f90 ${MODULE_FILES})
+target_link_libraries(${TARGET} LBFGS)

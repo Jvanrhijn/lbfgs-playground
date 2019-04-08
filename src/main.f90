@@ -1,6 +1,7 @@
 ! Module with objective functions for optimization testing
 module objectives
 use numeric_kinds
+use lbfgs_wrapper, only: lbfgs_iteration
 implicit none
 contains
 
@@ -52,7 +53,7 @@ program main
   integer(i4b), parameter :: n = 10
   real(dp), dimension(:), allocatable :: x
   integer(i4b) :: i = 1
-  integer(i4b), parameter :: num_iters = 100
+  integer(i4b), parameter :: num_iters = 99
 
   ! constant parameters for LBFGS algorithm
   real(dp) :: f
@@ -84,10 +85,9 @@ program main
   optimize: do i=1, num_iters
     f = norm_square(x, n)
     g = norm_square_grad(x, n)
-    call lbfgs(n, m, x, f, g, diagco, diag, iprint, eps, xtol, w, iflag)
-    if (iflag == -1) then
-      exit optimize
-    end if
+    !call lbfgs(n, m, x, f, g, diagco, diag, iprint, eps, xtol, w, iflag)
+    call lbfgs_iteration(f, x, g, n, m, diag, w)
+    print *, f
   end do optimize
 
   print '("Final objective function value: ", (d10.5))', norm_square(x, n)
