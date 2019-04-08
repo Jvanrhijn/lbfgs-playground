@@ -5,38 +5,47 @@ use lbfgs_wrapper, only: lbfgs_iteration
 implicit none
 contains
 
-  function norm_square(x, n)
-    real(dp) :: x(:)
-    integer(i4b) :: n
-    real(dp) :: norm_square
-    norm_square = sum(x**2)
+  function rosenbrock(x, n) result(val)
+    real(dp), dimension(1), intent(in) :: x
+    integer(i4b), intent(in) :: n
+    real(dp) :: val
+
+    ! temp values
+    real(dp) :: t1 = 0.d0
+    real(dp) :: t2 = 0.d0
+
+    ! counter
+    integer(i4b) :: j = 1
+
+    val = 0.d0
+    do j=1,n,2
+      t1 = 1.d0 - x(j)
+      t2 = 1.d1*(x(j + 1) - x(j)**2.d0)
+      val = val + t1**2.d0 + t2**2.d0
+    end do
   end function
 
-  function norm_square_grad(x, n)
+  function rosenbrock_grad(x, n) result(g)
+    real(dp), dimension(:), allocatable :: g
     real(dp), dimension(:) :: x
     integer(i4b) :: n
-    ! output gradient vector
-    real(dp), dimension(:), allocatable :: norm_square_grad 
-    allocate(norm_square_grad(n))
-    ! derivative of x^2:
-    norm_square_grad = 2*x
-  end function
 
-  function rastrigin(x, n)
-    real(dp) :: rastrigin
-    real(dp) , dimension(1) :: x
-    real(dp) , parameter :: pi = 3.14159265358979
-    integer(i4b) :: n
-    rastrigin = 10*n + sum(x**2 - 10.d0*cos(2*pi*x))
-  end function
+    ! temp values
+    real(dp) :: t1 = 0.d0
+    real(dp) :: t2 = 0.d0
 
-  function rastrigin_grad(x, n)
-    integer(i4b) :: n
-    real(dp), dimension(:) :: x
-    real(dp), dimension(:), allocatable :: rastrigin_grad
-    real(dp), parameter :: pi = 3.14159265358979
-    allocate(rastrigin_grad(n))
-    rastrigin_grad = 2.d0*x + 20.d0*pi*sin(2*pi*x)
+    ! counter
+    integer(i4b) :: j = 1
+
+    allocate(g(n))
+
+    do j=1,n,2
+      t1 = 1.d0 - x(j)
+      t2 = 1.d0*(x(j + 1) - x(j)**2)
+      g(j + 1) = 2.d1 * t2
+      g(j) = -2.d0 * (x(j) * g(j+1) + t1)
+    end do
+
   end function
 
 end module
@@ -51,12 +60,13 @@ program main
 
   ! variable declarations
   integer(i4b) :: i = 1 ! counter variable
-  integer(i4b), parameter :: n = 10 ! number of dimensions
+  integer(i4b), parameter :: n = 100 ! number of dimensions
   integer(i4b), parameter :: m = 5 ! number of history points to keep
 
   ! solution array
   real(dp), dimension(:), allocatable :: x
-  integer(i4b), parameter :: num_iters = 99
+  real(dp), dimension(:), allocatable :: y
+  integer(i4b), parameter :: num_iters = 30
 
   ! function value, gradient vector 
   real(dp) :: f
@@ -72,17 +82,17 @@ program main
   ! initial guess for x
   x = (/(dble(i), i=1,n)/)
 
-  print '("Initial objective value: ", (d10.5))', norm_square(x, n)
+  print '("Initial objective value: ", (d10.5))', rosenbrock(x, n)
 
   ! optimize the function
   optimize: do i=1, num_iters
-    f = norm_square(x, n)
-    g = norm_square_grad(x, n)
+    f = rosenbrock(x, n)
+    g = rosenbrock_grad(x, n)
     call lbfgs_iteration(f, x, g, n, m, diag, w)
     print *, f
   end do optimize
 
-  print '("Final objective function value: ", (d10.5))', norm_square(x, n)
+  print '("Final objective function value: ", (d10.5))', rosenbrock(x, n)
 
   ! clean up
   deallocate(x)
