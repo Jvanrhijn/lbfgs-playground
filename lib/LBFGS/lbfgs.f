@@ -16,6 +16,8 @@ C        LIMITED MEMORY BFGS METHOD FOR LARGE SCALE OPTIMIZATION
 C                          JORGE NOCEDAL
 C                        *** July 1990 ***
 C
+C     MODIFIED BY JESSE VAN RHIJN TO SUPPRESS OUTPUT ON IFLAG=-1, 2019/04/08
+C
 C 
 C     This subroutine solves the unconstrained minimization problem
 C 
@@ -251,7 +253,7 @@ C
       FINISH= .FALSE.
       IF(DIAGCO) THEN
          DO 30 I=1,N
- 30      IF (DIAG(I).LE.ZERO) GO TO 195
+ 30      IF (DIAG(I).LE.ZERO) GO TO 195 ! suppress output
       ELSE
          DO 40 I=1,N
  40      DIAG(I)= 1.0D0
@@ -368,7 +370,7 @@ C     ----------------------------------------------------
         IFLAG=1
         RETURN
       ENDIF
-      IF (INFO .NE. 1) GO TO 190
+      !IF (INFO .NE. 1) GO TO 190 ! suppress output
       NFUN= NFUN + NFEV
 C
 C     COMPUTE THE NEW STEP AND GRADIENT CHANGE 
@@ -401,15 +403,15 @@ C     ------------------------------------------------------------
 C     END OF MAIN ITERATION LOOP. ERROR EXITS.
 C     ------------------------------------------------------------
 C
- 190  IFLAG=-1
-      IF(LP.GT.0) WRITE(LP,200) INFO
-      RETURN
+! 190  IFLAG=-1
+!      IF(LP.GT.0) WRITE(LP,200) INFO
+!      RETURN
  195  IFLAG=-2
       IF(LP.GT.0) WRITE(LP,235) I
       RETURN
  196  IFLAG= -3
       IF(LP.GT.0) WRITE(LP,240)
-C
+
 C     FORMATS
 C     -------
 C
