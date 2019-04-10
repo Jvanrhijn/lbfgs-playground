@@ -20,33 +20,31 @@ contains
     val = 0.d0
     do j=1,n,2
       t1 = 1.d0 - x(j)
-      t2 = 1.d1*(x(j + 1) - x(j)**2.d0)
+      t2 = 1.d1*(x(j + 1) - x(j)**2)
       val = val + t1**2.d0 + t2**2.d0
     end do
   end function
 
-  function rosenbrock_grad(x, n) result(g)
-    real(dp), dimension(:), allocatable :: g
-    real(dp), dimension(:) :: x
-    integer(i4b) :: n
+  subroutine rosenbrock_grad(x, n, g) 
+    real(dp), dimension(:) :: g
+    real(dp), dimension(:), intent(in) :: x
+    integer(i4b), intent(in) :: n
 
     ! temp values
-    real(dp) :: t1 = 0.d0
-    real(dp) :: t2 = 0.d0
+    real(dp) :: t1
+    real(dp) :: t2
 
     ! counter
     integer(i4b) :: j = 1
 
-    allocate(g(n))
-
     do j=1,n,2
       t1 = 1.d0 - x(j)
-      t2 = 1.d0*(x(j + 1) - x(j)**2)
+      t2 = 1.d1*(x(j + 1) - x(j)**2)
       g(j + 1) = 2.d1 * t2
       g(j) = -2.d0 * (x(j) * g(j+1) + t1)
     end do
 
-  end function
+  end subroutine 
 
 end module
 
@@ -66,11 +64,12 @@ program main
   ! solution array
   real(dp), dimension(:), allocatable :: x
   real(dp), dimension(:), allocatable :: y
-  integer(i4b), parameter :: num_iters = 30
+  integer(i4b), parameter :: num_iters = 46
 
   ! function value, gradient vector 
   real(dp) :: f
   real(dp) :: g(n)
+  real(dp) :: t1, t2
 
   ! mutable data for LBFGS
   real(dp) :: w(n*(2*m + 1) + 2*m) ! scratchpad
@@ -80,14 +79,18 @@ program main
   allocate(x(n))
   
   ! initial guess for x
-  x = (/(dble(i), i=1,n)/)
+  !x = (/(dble(i), i=1,n)/)
+  do i=1,n,2
+    x(i) = -1.2d0
+    x(i+1) = 1.d0
+  end do
 
   print '("Initial objective value: ", (d10.5))', rosenbrock(x, n)
 
   ! optimize the function
   optimize: do i=1, num_iters
     f = rosenbrock(x, n)
-    g = rosenbrock_grad(x, n)
+    call rosenbrock_grad(x, n, g)
     call lbfgs_iteration(f, x, g, n, m, diag, w)
     print *, f
   end do optimize

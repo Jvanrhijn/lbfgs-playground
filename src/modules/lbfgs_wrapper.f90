@@ -22,9 +22,9 @@ contains
         integer(i4b), intent(in) :: history_size
 
         ! mutable parameters
-        real(dp), intent(out) :: parameters(num_pars)
-        real(dp), intent(out) :: workspace(num_pars*(2*history_size + 1) + 2*history_size)
-        real(dp), intent(out) :: diag(:)
+        real(dp), intent(inout) :: parameters(num_pars)
+        real(dp), intent(inout) :: workspace(num_pars*(2*history_size + 1) + 2*history_size)
+        real(dp), intent(inout) :: diag(num_pars)
         integer(i4b) :: error_flag = 0
 
         ! printing configuration
