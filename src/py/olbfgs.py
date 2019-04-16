@@ -107,23 +107,25 @@ if __name__ == "__main__":
     # Benchark: optimize an artificially noisy Rosenbrock function
     def noisy_rosenbrock(x, noise_scale):
         value = opt.rosen(x)
-        value += noise_scale * (np.random.randn() - 0.5)*2
+        value += noise_scale * (np.random.randn() - 0.5)*2 * abs(value)
         gradient = opt.rosen_der(x)
-        gradient += noise_scale * (np.random.randn(len(x)) - 0.5)*2
+        gradient += noise_scale * (np.random.randn(len(x)) - 0.5)*2 * max(abs(gradient))
         return value, gradient
 
     np.random.seed(0)
 
     # create initial state
-    x0 = np.random.random(100)
+    #x0 = np.random.random(100)
+    x0 = np.ones(100)
+    x0[::2] = -1
     x0_gd = deepcopy(x0)
 
     # step sizes for L-BFGS and gradient descent
-    step_size_lbfgs = 0.5
+    step_size_lbfgs = 1.5
     step_size_gd = 0.001
 
     # initialize objective function with given noise level
-    noise_level = 10
+    noise_level = 0.05
     optfun = lambda x: noisy_rosenbrock(x, noise_level)
 
     # arrays to store function values over the optimization process
@@ -131,7 +133,7 @@ if __name__ == "__main__":
 
     # create L-BFGS object
     hist_size = 10
-    lbfgs = LBFGS(hist_size)
+    lbfgs = LBFGS(hist_size, eps=1e-10)
 
     value, gradient = optfun(x0)
 
