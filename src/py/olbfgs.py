@@ -129,7 +129,8 @@ if __name__ == "__main__":
     fnvals, fnvals_gd = [], []
 
     # create L-BFGS object
-    lbfgs = LBFGS(hist_size=10)
+    hist_size = 10
+    lbfgs = LBFGS(hist_size)
 
     value, gradient = optfun(x0)
 
@@ -156,11 +157,12 @@ if __name__ == "__main__":
         fnvals_gd.append(value_gd)
 
     plt.figure()
-    plt.semilogy(fnvals, label='O-LBFGS')
-    plt.semilogy(fnvals_gd, label='Gradient descent')
+    plt.semilogy(fnvals, label=fr'O-LBFGS, $\tau={step_size_lbfgs}$, $m={hist_size}$')
+    plt.semilogy(fnvals_gd, label=fr'Gradient descent, $\tau={step_size_gd}$')
     plt.legend()
     plt.ylim(min(fnvals + fnvals_gd), max(fnvals + fnvals_gd))
     plt.xlabel('Iteration # (t)')
     plt.ylabel('$F(\mathbf{x}_t)$')
+    plt.title("Noisy Rosenbrock function, N = 100")
     plt.show()
 
