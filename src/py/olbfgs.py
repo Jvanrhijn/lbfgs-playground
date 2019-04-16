@@ -56,7 +56,8 @@ class LBFGS:
             alphas.append(alpha)
         if not stochastic:
             if self._iter > 0:
-                p *= np.dot(self._s[-1], self._y[-1])/(self._y[-1]**2).sum()
+                s, y = self._s[-1], self._y[-1]
+                p *= np.dot(s, y)/np.dot(y, y)
         else:
             if self._iter == 0:
                 p *= self._eps
@@ -106,9 +107,9 @@ if __name__ == "__main__":
     # Benchark: optimize an artificially noisy Rosenbrock function
     def noisy_rosenbrock(x, noise_scale):
         value = opt.rosen(x)
-        value += noise_scale * abs(value) * (np.random.randn() - 0.5)*2
+        value += noise_scale * (np.random.randn() - 0.5)*2
         gradient = opt.rosen_der(x)
-        gradient += max(abs(gradient)) * noise_scale * (np.random.randn(len(x)) - 0.5)*2
+        gradient += noise_scale * (np.random.randn(len(x)) - 0.5)*2
         return value, gradient
 
     np.random.seed(0)
@@ -122,7 +123,7 @@ if __name__ == "__main__":
     step_size_gd = 0.001
 
     # initialize objective function with given noise level
-    noise_level = 0.01
+    noise_level = 10
     optfun = lambda x: noisy_rosenbrock(x, noise_level)
 
     # arrays to store function values over the optimization process
