@@ -9,10 +9,31 @@ from functools import reduce
 sns.set(style='darkgrid', font_scale=1.5)
 
 
-
 class LBFGS:
+    """
+    Implementation of online L-BFGS (oLBFGS) as per 
 
+        "A Stochastic Quasi-Newton Method for Online Convex Optimization"
+
+		Schraudolf, Yu and Günter (2007)
+    
+    This implementation skips the 'consistent gradients' step from the
+    original paper.
+    
+    """
     def __init__(self, hist_size, l=0, c=1, eps=1e-10):
+        """
+        Parameters
+	----------
+	hist_size: int
+		Number of curvature pairs to store internally.
+	l: float
+		parameter \lambda from the above paper.
+	c: float
+		parameter c from the above paper.
+	eps: float
+		parameter \epsilon from the above paper.
+	"""
         assert(l >= 0)
         assert(0 < c <= 1)
         self._l = l
@@ -25,6 +46,7 @@ class LBFGS:
         self._grad_prev = 0
 
     def _get_initial_direction(self, gradient, stochastic):
+        """Determine the approximate product H @ grad(F)"""
         p = -gradient
         alphas = []
         # first of 2-loop recursion
@@ -32,7 +54,6 @@ class LBFGS:
             alpha = np.dot(s, p)/np.dot(s, y)
             p -= alpha * y
             alphas.append(alpha)
-        # this step slows LBFGS down
         if not stochastic:
             if self._iter > 0:
                 p *= np.dot(self._s[-1], self._y[-1])/(self._y[-1]**2).sum()
@@ -52,6 +73,19 @@ class LBFGS:
 
 
     def iteration(self, x, gradient, step_size=1, stochastic=True):
+        """
+	Perform a single iteration of oLBFGS.
+	
+	Parameters
+	----------
+	x: ndarray
+		Current best guess of optimum location.
+	step_size: float
+		Step size to use for computing curvature parameter s
+	stochastic: bool
+		Whether to use the stochastically robust version of the algortithm.
+		Recommended to leave this on.
+	"""
         p = self._get_initial_direction(gradient, stochastic)
         s = step_size * p / self._c
         # save current gradient for next pass
