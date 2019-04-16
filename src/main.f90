@@ -64,7 +64,7 @@ program main
   ! solution array
   real(dp), dimension(:), allocatable :: x
   real(dp), dimension(:), allocatable :: y
-  integer(i4b), parameter :: num_iters = 46
+  integer(i4b), parameter :: num_iters = 100
 
   ! function value, gradient vector 
   real(dp) :: f
@@ -74,6 +74,16 @@ program main
   ! mutable data for LBFGS
   real(dp) :: w(n*(2*m + 1) + 2*m) ! scratchpad
   real(dp) :: diag(n) ! hessian diagonal
+
+  ! noise vector and value
+  real(dp) :: rand(n)
+  real(dp) :: noise
+
+  ! step size annealing
+  real(dp) :: step_naught = 0.00001d0
+  real(dp) :: step
+  real(dp) :: decay_const = 1.d0
+
 
   ! allocate solution array
   allocate(x(n))
@@ -89,9 +99,17 @@ program main
 
   ! optimize the function
   optimize: do i=1, num_iters
+    step = step_naught/(i - 1.d0 + decay_const)
     f = rosenbrock(x, n)
     call rosenbrock_grad(x, n, g)
-    call lbfgs_iteration(f, x, g, n, m, diag, w)
+    ! add noise to function value
+    call random_number(noise)
+    !f = f + 0.01d0*2.d0*(noise - 0.5d0)*abs(f)
+    ! add noise to gradient vector
+    call random_number(rand)
+    !g = g + 0.01d0*2.d0*(rand - 0.5d0)*maxval(abs(g))
+    ! perform LBFGS iteration
+    call lbfgs_iteration(f, x, g, n, m, diag, w, step)
     print *, f
   end do optimize
 

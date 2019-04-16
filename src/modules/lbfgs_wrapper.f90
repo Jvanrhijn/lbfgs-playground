@@ -14,10 +14,11 @@ implicit none
 
 contains
 
-    subroutine lbfgs_iteration(function_value, parameters, gradient, num_pars, history_size, diag, workspace)
+    subroutine lbfgs_iteration(function_value, parameters, gradient, num_pars, history_size, diag, workspace, step)
         ! input parameters
         real(dp), intent(in) :: function_value
         real(dp), intent(in) :: gradient(num_pars)
+        real(dp), intent(in) :: step
         integer(i4b), intent(in) :: num_pars
         integer(i4b), intent(in) :: history_size
 
@@ -32,7 +33,7 @@ contains
         iprint(2) = 0 ! arbitrary since we're not printing anything
 
         call lbfgs(num_pars, history_size, parameters, function_value, gradient, &
-                   diagco, diag, iprint, eps, xtol, workspace, error_flag)
+                   diagco, diag, iprint, eps, xtol, workspace, error_flag, step)
 
     end subroutine
 
