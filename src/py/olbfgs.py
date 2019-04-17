@@ -115,32 +115,35 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     # create initial state
-    #x0 = np.random.random(100)
-    x0 = np.ones(100)
-    x0[::2] = -1
+    dim = 2
+    x0 = np.array([2., 2.])
+    #x0 = np.random.random(dim)
+    #x0 = np.ones(dim)
+    #x0[::2] = -1
     x0_gd = deepcopy(x0)
 
     # step sizes for L-BFGS and gradient descent
-    step_size_lbfgs = 1.5
+    step_size_lbfgs = 1.0
     step_size_gd = 0.001
 
     # initialize objective function with given noise level
-    noise_level = 0.05
+    noise_level = 0.01
     optfun = lambda x: noisy_rosenbrock(x, noise_level)
 
     # arrays to store function values over the optimization process
     fnvals, fnvals_gd = [], []
 
     # create L-BFGS object
-    hist_size = 10
+    hist_size = 5
     lbfgs = LBFGS(hist_size, eps=1e-10)
 
     value, gradient = optfun(x0)
 
+    xpoints = []
+
     # perform optimization
     for it in range(100):
         fnvals.append(value)
-        print('LBFGS function value:', value)
 
         # compute new parameter set
         xnew = lbfgs.iteration(x0, gradient, step_size_lbfgs, stochastic=True)
@@ -154,18 +157,42 @@ if __name__ == "__main__":
 
         x0 = xnew
 
+
         # gd for comparison
         value_gd, grad_gd = optfun(x0_gd)
         x0_gd -= step_size_gd * grad_gd
         fnvals_gd.append(value_gd)
 
-    plt.figure()
-    plt.semilogy(fnvals, label=fr'O-LBFGS, $\tau={step_size_lbfgs}$, $m={hist_size}$')
-    plt.semilogy(fnvals_gd, label=fr'Gradient descent, $\tau={step_size_gd}$')
-    plt.legend()
-    plt.ylim(min(fnvals + fnvals_gd), max(fnvals + fnvals_gd))
-    plt.xlabel('Iteration # (t)')
-    plt.ylabel('$F(\mathbf{x}_t)$')
-    plt.title("Noisy Rosenbrock function, N = 100")
+        xpoints.append(x0_gd)
+
+        print('LBFGS function value:', value)
+
+    from mpl_toolkits.mplot3d import Axes3D  
+    from matplotlib import cm
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    x = np.linspace(-2, 2, 100)
+    y = np.linspace(-2, 4, 100)
+    x, y = np.meshgrid(x, y)
+    rosen = lambda x, y: (1 - x**2) + 100*(y - x**2)**2
+    z = rosen(x, y)
+    ax.plot_surface(x, y, z, cmap=cm.coolwarm)
+    points = np.zeros((len(xpoints), 2))
+    for i, xp in enumerate(xpoints):
+        points[i, :] = xp
+    ax.plot(points[:, 0], points[:, 1], rosen(points[:, 0], points[:, 1]))
+
     plt.show()
 
+
+#    plt.figure()
+#    plt.semilogy(fnvals, label=fr'O-LBFGS, $\tau={step_size_lbfgs}$, $m={hist_size}$')
+#    plt.semilogy(fnvals_gd, label=fr'Gradient descent, $\tau={step_size_gd}$')
+#    plt.legend()
+#    plt.ylim(min(fnvals + fnvals_gd), max(fnvals + fnvals_gd))
+#    plt.xlabel('Iteration # (t)')
+#    plt.ylabel('$F(\mathbf{x}_t)$')
+#    plt.title("Noisy Rosenbrock function, N = 100")
+#    plt.show()
+#
