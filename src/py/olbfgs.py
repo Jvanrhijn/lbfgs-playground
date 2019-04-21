@@ -115,25 +115,26 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     # create initial state
-    dim = 100
+    dim = 100 
     #x0 = np.random.random(dim)
     x0 = np.ones(dim)
     x0[::2] = -1
     x0_gd = deepcopy(x0)
+    x0_scipy = deepcopy(x0)
 
     # step sizes for L-BFGS and gradient descent
-    step_size_lbfgs = 1.0
+    step_size_lbfgs = 0.5
     step_size_gd = 0.001
 
     # initialize objective function with given noise level
-    noise_level = 0.05
+    noise_level = 0.01
     optfun = lambda x: noisy_rosenbrock(x, noise_level)
 
     # arrays to store function values over the optimization process
     fnvals, fnvals_gd = [], []
 
     # create L-BFGS object
-    hist_size = 5
+    hist_size = 10
     lbfgs = LBFGS(hist_size, eps=1e-10)
 
     value, gradient = optfun(x0)
@@ -142,7 +143,7 @@ if __name__ == "__main__":
     xpoints_gd = [deepcopy(x0)]
 
     # perform optimization
-    for it in range(100):
+    for it in range(500):
         fnvals.append(value)
 
         # compute new parameter set
@@ -198,6 +199,9 @@ if __name__ == "__main__":
 
         plt.show()
 
+
+    x, f, d = opt.fmin_l_bfgs_b(optfun, x0_scipy)
+    print(f"L-BFGS-B minimum: {f}")
 
     plt.figure()
     plt.semilogy(fnvals, label=fr'O-LBFGS, $\tau={step_size_lbfgs}$, $m={hist_size}$')
