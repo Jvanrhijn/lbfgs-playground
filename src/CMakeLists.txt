@@ -7,4 +7,3 @@ file(GLOB MODULE_FILES "modules/*.f90")
 set(TARGET lbfgs_test)
 
 add_executable(${TARGET} main.f90 ${MODULE_FILES})
-target_link_libraries(${TARGET} LBFGS)

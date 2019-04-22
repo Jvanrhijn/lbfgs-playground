@@ -47,7 +47,7 @@ class LBFGS:
         self._pars_prev = 0
 
     def _get_initial_direction(self, gradient, stochastic):
-        """Determine the approximate product H @ grad(F)"""
+        """Determine the approximate product -inv(H) @ grad(F)"""
         p = -gradient
         alphas = []
         # first of 2-loop recursion
@@ -110,19 +110,27 @@ if __name__ == "__main__":
 
     # Benchark: optimize an artificially noisy Rosenbrock function
     def noisy_rosenbrock(x, noise_scale):
-        value = opt.rosen(x)
+        #value = opt.rosen(x)
+        #gradient = opt.rosen_der(x)
+        value = 0
+        gradient = np.zeros(x.shape)
+        for i in range(0, len(x), 2):
+            t1 = 1 - x[i]
+            t2 = 10*(x[i+1] - x[i]**2)
+            value += t1**2 + t2**2
+            gradient[i+1] = 20 * t2
+            gradient[i] = -2 * (x[i]*gradient[i+1] + t1)
         value += noise_scale * (np.random.randn() - 0.5)*2 * abs(value)
-        gradient = opt.rosen_der(x)
         gradient += noise_scale * (np.random.randn(len(x)) - 0.5)*2 * max(abs(gradient))
         return value, gradient
 
     np.random.seed(0)
 
     # create initial state
-    dim = 100 
+    dim = 100
     #x0 = np.random.random(dim)
     x0 = np.ones(dim)
-    x0[::2] = -1
+    x0[::2] = -1.2
     x0_gd = deepcopy(x0)
     x0_scipy = deepcopy(x0)
 
@@ -147,19 +155,17 @@ if __name__ == "__main__":
     xpoints_gd = [deepcopy(x0)]
 
     # perform optimization
-    for it in range(500):
+    for it in range(100):
         fnvals.append(value)
 
         # compute new parameter set
-        xnew = lbfgs.iteration(x0, gradient, step_size_lbfgs, stochastic=True)
+        x0 = lbfgs.iteration(x0, gradient, step_size_lbfgs, stochastic=True)
 
         # find gradient at new parameter set
-        value, gradient = optfun(xnew)
+        value, gradient = optfun(x0)
 
         # store curvature pairs
-        lbfgs.update_curvature_pairs(xnew, gradient)
-
-        x0 = xnew
+        lbfgs.update_curvature_pairs(x0, gradient)
 
         # gd for comparison
         value_gd, grad_gd = optfun(x0_gd)
