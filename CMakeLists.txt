@@ -6,5 +6,4 @@ project(lbfgs_playground)
 
 set(TARGET lbfgs_pg)
 
-add_subdirectory(lib)
 add_subdirectory(src)
