@@ -6,8 +6,10 @@ implicit none
         integer, parameter :: dp = kind(0.d0)
         real(dp), allocatable :: curvature_s(:, :)
         real(dp), allocatable :: curvature_y(:, :)
-        logical :: initialized = .false.
+        real(dp), allocatable :: gradient_prev(:)
+        real(dp), allocatable :: parms_prev(:)
         real(dp), parameter :: eps = 1.0e-10_dp
+        integer :: curvature_index = 1
 
     public olbfgs_iteration, update_hessian
 
@@ -23,11 +25,18 @@ contains
 
         ! local data
         real(dp), allocatable :: p(:)
+        integer :: i
 
-        if (.not. initialized) then
+        ! initial setup upon first call
+        if (.not. (allocated(curvature_s) &
+             .and. allocated(curvature_y) &
+             .and. allocated(gradient_prev))) then
             allocate(curvature_s(history_size, num_pars))
             allocate(curvature_y(history_size, num_pars))
-            initialized = .true.
+            allocate(gradient_prev(num_pars))
+            allocate(parms_prev(num_pars))
+            gradient_prev = (/(0, i=1, num_pars)/)
+            parms_prev = (/(0, i=1, num_pars)/)
         end if
 
         ! allocate local data
@@ -36,15 +45,20 @@ contains
         ! compute initial search direction
         p = initial_direction(gradient, iteration)
 
-        ! TODO save previous gradient value
+        ! save previous gradient and parameters value
+        gradient_prev = gradient
+        parms_prev = parameters
 
         ! update parmaters
         parameters = parameters + step_size * p
 
     end subroutine
 
-    subroutine update_hessian()
-
+    subroutine update_hessian(parameters, gradient)
+        real(dp), dimension(:), intent(in) :: parameters
+        real(dp), dimension(:), intent(in) :: gradient
+        curvature_s(curvature_index, :) = parameters - parms_prev
+        curvature_y(curvature_index, :) = gradient - gradient_prev
     end subroutine
 
     pure function initial_direction(gradient, iteration)
@@ -98,7 +112,5 @@ contains
         end do
 
     end function 
-
-
 
 end module

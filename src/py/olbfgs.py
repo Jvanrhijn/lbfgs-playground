@@ -44,6 +44,7 @@ class LBFGS:
         self._s = deque(maxlen=hist_size)
         self._y = deque(maxlen=hist_size)
         self._grad_prev = 0
+        self._pars_prev = 0
 
     def _get_initial_direction(self, gradient, stochastic):
         """Determine the approximate product H @ grad(F)"""
@@ -91,14 +92,17 @@ class LBFGS:
         s = step_size * p / self._c
         # save current gradient for next pass
         self._grad_prev = deepcopy(gradient)
+        self._pars_prev = deepcopy(x)
         self._iter += 1
         # return new parameter vector
         return x + s
 
-    def update_curvature_pairs(self, s, grad):
+    def update_curvature_pairs(self, pars, grad):
         # save curvature pairs
+        s = pars - self._pars_prev
+        y = grad - self._grad_prev + self._l * s
         self._s.append(s)
-        self._y.append(grad - self._grad_prev + self._l * s)
+        self._y.append(y)
 
 
 if __name__ == "__main__":
@@ -134,7 +138,7 @@ if __name__ == "__main__":
     fnvals, fnvals_gd = [], []
 
     # create L-BFGS object
-    hist_size = 10
+    hist_size = 5
     lbfgs = LBFGS(hist_size, eps=1e-10)
 
     value, gradient = optfun(x0)
@@ -153,11 +157,9 @@ if __name__ == "__main__":
         value, gradient = optfun(xnew)
 
         # store curvature pairs
-        s = xnew - x0
-        lbfgs.update_curvature_pairs(s, gradient)
+        lbfgs.update_curvature_pairs(xnew, gradient)
 
         x0 = xnew
-
 
         # gd for comparison
         value_gd, grad_gd = optfun(x0_gd)

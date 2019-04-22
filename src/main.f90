@@ -1,21 +1,20 @@
 ! Module with objective functions for optimization testing
 module objectives
-use numeric_kinds
-use lbfgs_wrapper, only: lbfgs_iteration
+use olbfgs, only: olbfgs_iteration, update_hessian
 implicit none
 contains
 
   function rosenbrock(x, n) result(val)
-    real(dp), dimension(1), intent(in) :: x
-    integer(i4b), intent(in) :: n
-    real(dp) :: val
+    real(kind=9), dimension(1), intent(in) :: x
+    integer), intent(in) :: n
+    real(kind=8) :: val
 
     ! temp values
-    real(dp) :: t1 = 0.d0
-    real(dp) :: t2 = 0.d0
+    real(kind=8) :: t1 = 0.d0
+    real(kind=8) :: t2 = 0.d0
 
     ! counter
-    integer(i4b) :: j = 1
+    integer :: j = 1
 
     val = 0.d0
     do j=1,n,2
@@ -26,16 +25,16 @@ contains
   end function
 
   subroutine rosenbrock_grad(x, n, g) 
-    real(dp), dimension(:) :: g
-    real(dp), dimension(:), intent(in) :: x
-    integer(i4b), intent(in) :: n
+    real(kind=8), dimension(:) :: g
+    real(kind=8), dimension(:), intent(in) :: x
+    integer, intent(in) :: n
 
     ! temp values
-    real(dp) :: t1
-    real(dp) :: t2
+    real(kind=8) :: t1
+    real(kind=8) :: t2
 
     ! counter
-    integer(i4b) :: j = 1
+    integer :: j = 1
 
     do j=1,n,2
       t1 = 1.d0 - x(j)
@@ -53,18 +52,18 @@ program main
   use objectives
   use numeric_kinds
   implicit none
-
-  external LB2 ! absolutely horrifying
+  
+  integer, parameter :: dp = kind(0.d0)
 
   ! variable declarations
-  integer(i4b) :: i = 1 ! counter variable
-  integer(i4b), parameter :: n = 100 ! number of dimensions
-  integer(i4b), parameter :: m = 5 ! number of history points to keep
+  integer :: i = 1 ! counter variable
+  integer, parameter :: n = 100 ! number of dimensions
+  integer, parameter :: m = 5 ! number of history points to keep
 
   ! solution array
   real(dp), dimension(:), allocatable :: x
   real(dp), dimension(:), allocatable :: y
-  integer(i4b), parameter :: num_iters = 100
+  integer, parameter :: num_iters = 100
 
   ! function value, gradient vector 
   real(dp) :: f
