@@ -99,15 +99,15 @@ program main
 
   ! optimize the function
   optimize: do i=1, num_iters
-    step = step_naught/(i - 1.d0 + decay_const)
+    !step = step_naught/(i - 1.d0 + decay_const)
     f = rosenbrock(x, n)
     call rosenbrock_grad(x, n, g)
     ! add noise to function value
     call random_number(noise)
-    !f = f + 0.01d0*2.d0*(noise - 0.5d0)*abs(f)
+    f = f + 0.001d0*2.d0*(noise - 0.5d0)*abs(f)
     ! add noise to gradient vector
     call random_number(rand)
-    !g = g + 0.01d0*2.d0*(rand - 0.5d0)*maxval(abs(g))
+    g = g + 0.001d0*2.d0*(rand - 0.5d0)*maxval(abs(g))
     ! perform LBFGS iteration
     call lbfgs_iteration(f, x, g, n, m, diag, w, step)
     print *, f
