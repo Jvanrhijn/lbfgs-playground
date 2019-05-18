@@ -24,16 +24,16 @@ class LBFGS:
     def __init__(self, hist_size, l=0, c=1, eps=1e-10):
         """
         Parameters
-	----------
-	hist_size: int
-		Number of curvature pairs to store internally.
-	l: float
-		parameter \lambda from the above paper.
-	c: float
-		parameter c from the above paper.
-	eps: float
+    	----------
+    	hist_size: int
+    		Number of curvature pairs to store internally.
+    	l: float
+    		parameter \lambda from the above paper.
+    	c: float
+    		parameter c from the above paper.
+    	eps: float
 		parameter \epsilon from the above paper.
-	"""
+        """
         assert(l >= 0)
         assert(0 < c <= 1)
         self._l = l
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     # create initial state
-    dim = 100
+    dim = 10
     #x0 = np.random.random(dim)
     x0 = np.ones(dim)
     x0[::2] = -1.2
@@ -146,13 +146,15 @@ if __name__ == "__main__":
     fnvals, fnvals_gd = [], []
 
     # create L-BFGS object
-    hist_size = 5
+    hist_size = 10
     lbfgs = LBFGS(hist_size, eps=1e-10)
 
     value, gradient = optfun(x0)
 
     xpoints = [deepcopy(x0)]
     xpoints_gd = [deepcopy(x0)]
+
+    print(f"Initial fn value: {value}")
 
     # perform optimization
     for it in range(100):

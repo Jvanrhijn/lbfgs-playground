@@ -55,12 +55,15 @@ program main
   ! variable declarations
   integer :: i = 1 ! counter variable
   integer, parameter :: n = 100 ! number of dimensions
-  integer, parameter :: m = 5 ! number of history points to keep
+  integer, parameter :: m = 10 ! number of history points to keep
+
+  ! Noise level; increase for noisier objective function
+  real(kind=8), parameter :: noise_level = 0.01
 
   ! solution array
   real(kind=8), dimension(:), allocatable :: x
   real(kind=8), dimension(:), allocatable :: y
-  integer, parameter :: num_iters = 15
+  integer, parameter :: num_iters = 100
 
   ! function value, gradient vector 
   real(kind=8) :: f
@@ -81,7 +84,7 @@ program main
     x(i+1) = 1.d0
   end do
 
-  print '("Initial objective value: ", (d10.5))', rosenbrock(x, n)
+  !print '("Initial objective value: ", (d10.5))', rosenbrock(x, n)
 
   ! optimize the function
   optimize: do i=1, num_iters
@@ -89,20 +92,20 @@ program main
     call rosenbrock_grad(x, n, g)
     ! add noise to function value
     call random_number(noise)
-    !f = f + 0.01d0*2.d0*(noise - 0.5d0)*abs(f)
+    f = f + noise_level * 2.d0*(noise - 0.5d0)*abs(f)
     ! add noise to gradient vector
     call random_number(rand)
-    !g = g + 0.01d0*2.d0*(rand - 0.5d0)*maxval(abs(g))
+    g = g + noise_level * 2.d0*(rand - 0.5d0)*maxval(abs(g))
     ! perform LBFGS iteration
     call olbfgs_iteration(n, m, x, g, step, i)
     ! compute new gradient and update hessian approx
     call rosenbrock_grad(x, n, g)
     call update_hessian(x, g)
     ! output progress
-    !print *, f
+    print *, f
   end do optimize
 
-  print '("Final objective function value: ", (d10.5))', rosenbrock(x, n)
+  !print '("Final objective function value: ", (d10.5))', rosenbrock(x, n)
 
   ! clean up
   deallocate(x)
