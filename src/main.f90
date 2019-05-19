@@ -1,6 +1,6 @@
 ! Module with objective functions for optimization testing
 module objectives
-use olbfgs, only: olbfgs_iteration, update_hessian
+use olbfgs, only: initialize_olbfgs, olbfgs_iteration, update_hessian
 implicit none
 contains
 
@@ -55,10 +55,10 @@ program main
   ! variable declarations
   integer :: i = 1 ! counter variable
   integer, parameter :: n = 100 ! number of dimensions
-  integer, parameter :: m = 10 ! number of history points to keep
+  integer, parameter :: m = 5 ! number of history points to keep
 
   ! Noise level; increase for noisier objective function
-  real(kind=8), parameter :: noise_level = 0.01
+  real(kind=8), parameter :: noise_level = 0.005
 
   ! solution array
   real(kind=8), dimension(:), allocatable :: x
@@ -85,11 +85,14 @@ program main
   end do
 
   !print '("Initial objective value: ", (d10.5))', rosenbrock(x, n)
+  call initialize_olbfgs(n, m)
 
   ! optimize the function
   optimize: do i=1, num_iters
     f = rosenbrock(x, n)
     call rosenbrock_grad(x, n, g)
+    ! update Hessian approximation
+    call update_hessian(x, g)
     ! add noise to function value
     call random_number(noise)
     f = f + noise_level * 2.d0*(noise - 0.5d0)*abs(f)
@@ -97,10 +100,7 @@ program main
     call random_number(rand)
     g = g + noise_level * 2.d0*(rand - 0.5d0)*maxval(abs(g))
     ! perform LBFGS iteration
-    call olbfgs_iteration(n, m, x, g, step, i)
-    ! compute new gradient and update hessian approx
-    call rosenbrock_grad(x, n, g)
-    call update_hessian(x, g)
+    call olbfgs_iteration(x, g, step, i)
     ! output progress
     print *, f
   end do optimize

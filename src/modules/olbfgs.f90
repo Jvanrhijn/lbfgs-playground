@@ -11,13 +11,26 @@ implicit none
         real(dp), parameter :: eps = 1.0e-10_dp
         integer :: curvature_index = 0
 
-    public olbfgs_iteration, update_hessian
+    public initialize_olbfgs, olbfgs_iteration, update_hessian
 
 contains
 
-    subroutine olbfgs_iteration(num_pars, history_size, parameters, gradient, step_size, iteration)
+    subroutine initialize_olbfgs(num_pars, history_size) 
         integer, intent(in) :: num_pars
         integer, intent(in) :: history_size
+        integer :: i
+
+        ! initial setup upon first call
+        allocate(s(history_size, num_pars))
+        allocate(y(history_size, num_pars))
+        allocate(gradient_prev(num_pars))
+        allocate(parms_prev(num_pars))
+        gradient_prev = (/(0, i=1, num_pars)/)
+        parms_prev = (/(0, i=1, num_pars)/)
+
+    end subroutine
+
+    subroutine olbfgs_iteration(parameters, gradient, step_size, iteration)
         real(dp), intent(inout) :: parameters(:)
         real(dp), intent(inout) :: gradient(:)
         real(dp), intent(in) :: step_size
@@ -25,23 +38,6 @@ contains
 
         ! local data
         real(dp), allocatable :: p(:)
-        integer :: i
-
-        ! initial setup upon first call
-        if (.not. (allocated(s) &
-             .and. allocated(y) &
-             .and. allocated(gradient_prev) &
-             .and. allocated(parms_prev))) then
-            allocate(s(history_size, num_pars))
-            allocate(y(history_size, num_pars))
-            allocate(gradient_prev(num_pars))
-            allocate(parms_prev(num_pars))
-            gradient_prev = (/(0, i=1, num_pars)/)
-            parms_prev = (/(0, i=1, num_pars)/)
-        end if
-
-        ! allocate local data
-        allocate(p(num_pars))
 
         ! compute initial search direction
         p = initial_direction(gradient, iteration)
@@ -60,8 +56,11 @@ contains
         real(dp), dimension(:), intent(in) :: gradient
         integer :: m 
         m = size(s(:, 1))
-        curvature_index = curvature_index + 1
-        curvature_index = mod(curvature_index - 1 , m) + 1
+
+        ! update head of "queue" used to store curvature pairs
+        curvature_index = mod(curvature_index , m) + 1
+
+        ! update curvature pairs s, y according to algorithm
         s(curvature_index, :) = parameters - parms_prev
         y(curvature_index, :) = gradient - gradient_prev
     end subroutine
@@ -89,7 +88,7 @@ contains
 
         ! first of two-loop recursion
         ! TODO: figure out way to use curvature_meow as queue
-        do i=min(m, iteration-1),1,-1
+        do i=min(m, iteration),1,-1
             head = transform_index(i, iteration)
             alpha = dot_product(s(head, :), initial_direction) &
                 / dot_product(s(head, :), y(head, :))
@@ -102,7 +101,7 @@ contains
             initial_direction = initial_direction * eps
         else
             tot = 0.0_dp
-            do i=1, min(m, iteration-1)
+            do i=1, min(m, iteration)
                 head = transform_index(i, iteration)
                 tot = tot + dot_product(s(head, :), y(head, :)) &
                     / dot_product(y(head, :), y(head, :))
@@ -111,7 +110,7 @@ contains
         end if
 
         ! second of two-loop recursion
-        do i=1, min(m, iteration-1)
+        do i=1, min(m, iteration)
             head = transform_index(i, iteration)
             alpha = alphas(head)
             beta = dot_product(y(head, :), initial_direction) &
