@@ -88,7 +88,7 @@ program main
   call initialize_olbfgs(n, m)
 
   ! optimize the function
-  optimize: do i=1, num_iters
+  do i=1, num_iters
     f = rosenbrock(x, n)
     call rosenbrock_grad(x, n, g)
     ! update Hessian approximation
@@ -103,11 +103,11 @@ program main
     call olbfgs_iteration(x, g, step, i)
     ! output progress
     print *, f
-  end do optimize
+  end do 
 
   !print '("Final objective function value: ", (d10.5))', rosenbrock(x, n)
 
   ! clean up
   deallocate(x)
 
-end program main
+end program
