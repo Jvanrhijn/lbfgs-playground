@@ -25,6 +25,7 @@ contains
         allocate(y(history_size, num_pars))
         allocate(gradient_prev(num_pars))
         allocate(parms_prev(num_pars))
+
         gradient_prev = (/(0, i=1, num_pars)/)
         parms_prev = (/(0, i=1, num_pars)/)
 
@@ -32,37 +33,43 @@ contains
 
     subroutine olbfgs_iteration(parameters, gradient, step_size, iteration)
         real(dp), intent(inout) :: parameters(:)
-        real(dp), intent(inout) :: gradient(:)
+        real(dp), intent(in) :: gradient(:)
         real(dp), intent(in) :: step_size
         integer, intent(in) :: iteration
 
+        integer :: n
+        
         ! local data
         real(dp), allocatable :: p(:)
+        allocate(p(n))
+
+        n = size(s(1, :))
 
         ! compute initial search direction
         p = initial_direction(gradient, iteration)
 
         ! save previous gradient and parameters value
-        gradient_prev = gradient
-        parms_prev = parameters
+        gradient_prev = gradient(1:n)
+        parms_prev = parameters(1:n)
 
         ! update parmaters
-        parameters = parameters + step_size * p
+        parameters(1:n) = parameters(1:n) + step_size * p(1:n)
 
     end subroutine
 
     subroutine update_hessian(parameters, gradient)
         real(dp), dimension(:), intent(in) :: parameters
         real(dp), dimension(:), intent(in) :: gradient
-        integer :: m 
+        integer :: m, n
         m = size(s(:, 1))
+        n = size(s(1, :))
 
         ! update head of "queue" used to store curvature pairs
         curvature_index = mod(curvature_index , m) + 1
 
         ! update curvature pairs s, y according to algorithm
         s(curvature_index, :) = parameters - parms_prev
-        y(curvature_index, :) = gradient - gradient_prev
+        y(curvature_index, :) = gradient(1:n) - gradient_prev
     end subroutine
 
     function initial_direction(gradient, iteration)
@@ -74,7 +81,7 @@ contains
         integer :: n, m, i, head
         real(dp) :: alpha, beta, tot
         real(dp), allocatable :: alphas(:)
-        n = size(gradient) ! number of parameters
+        n = size(s(1, :)) ! number of parameters
         m = size(s(:, 1)) ! history size
 
         ! allocate return value
@@ -84,7 +91,7 @@ contains
         allocate(alphas(min(m, iteration)))
 
         ! perform hessian approximation using history
-        initial_direction = -gradient
+        initial_direction = -gradient(1:n)
 
         ! first of two-loop recursion
         ! TODO: figure out way to use curvature_meow as queue
