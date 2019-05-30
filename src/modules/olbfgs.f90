@@ -15,9 +15,11 @@ implicit none
 
 contains
 
-    subroutine initialize_olbfgs(num_pars, history_size) 
+    subroutine initialize_olbfgs(parameters, gradient, num_pars, history_size) 
         integer, intent(in) :: num_pars
         integer, intent(in) :: history_size
+        real(dp), intent(in) :: parameters(:)
+        real(dp), intent(in) :: gradient(:)
         integer :: i
 
         ! initial setup upon first call
@@ -26,8 +28,8 @@ contains
         allocate(gradient_prev(num_pars))
         allocate(parms_prev(num_pars))
 
-        gradient_prev = (/(0, i=1, num_pars)/)
-        parms_prev = (/(0, i=1, num_pars)/)
+        gradient_prev = gradient(1:num_pars)
+        parms_prev = parameters(1:num_pars)
 
     end subroutine
 
@@ -58,8 +60,8 @@ contains
     end subroutine
 
     subroutine update_hessian(parameters, gradient)
-        real(dp), dimension(:), intent(in) :: parameters
-        real(dp), dimension(:), intent(in) :: gradient
+        real(dp), dimension(:), intent(in) :: parameters(:)
+        real(dp), dimension(:), intent(in) :: gradient(:)
         integer :: m, n
         m = size(s(:, 1))
         n = size(s(1, :))
@@ -68,8 +70,9 @@ contains
         curvature_index = mod(curvature_index , m) + 1
 
         ! update curvature pairs s, y according to algorithm
-        s(curvature_index, :) = parameters - parms_prev
+        s(curvature_index, :) = parameters(1:n) - parms_prev
         y(curvature_index, :) = gradient(1:n) - gradient_prev
+
     end subroutine
 
     function initial_direction(gradient, iteration)
@@ -94,8 +97,7 @@ contains
         initial_direction = -gradient(1:n)
 
         ! first of two-loop recursion
-        ! TODO: figure out way to use curvature_meow as queue
-        do i=min(m, iteration),1,-1
+        do i=min(m, iteration-1),1,-1
             head = transform_index(i, iteration)
             alpha = dot_product(s(head, :), initial_direction) &
                 / dot_product(s(head, :), y(head, :))
@@ -105,10 +107,11 @@ contains
 
         ! scale search direction
         if (iteration == 1) then
+            ! do simple gradient descent at first iteration
             initial_direction = initial_direction * eps
         else
             tot = 0.0_dp
-            do i=1, min(m, iteration)
+            do i=1, min(m, iteration-1)
                 head = transform_index(i, iteration)
                 tot = tot + dot_product(s(head, :), y(head, :)) &
                     / dot_product(y(head, :), y(head, :))
@@ -117,7 +120,7 @@ contains
         end if
 
         ! second of two-loop recursion
-        do i=1, min(m, iteration)
+        do i=1, min(m, iteration-1)
             head = transform_index(i, iteration)
             alpha = alphas(head)
             beta = dot_product(y(head, :), initial_direction) &
