@@ -29,19 +29,22 @@ program main
     ! initialize parameter vector x
     x = ...
 
-    ! First intiialize the algorithm (i.e. allocate storage)
-    call initialize_olbfgs(n, m)
+    value = f(x)
+    grad = g(x)
+
+    ! First intiialize the algorithm (i.e. allocate storage, set previous gradient/parameter values)
+    call initialize_olbfgs(value, grad, n, m)
 
     do i = 1, 100, 1
-        ! output function value
-        print *, f(x)
+        ! perform optimization iteration
+        call olbfgs_iteration(x, g, step_size, i)
         ! compute function value, gradient
         value = f(x)
         grad = g(x)
         ! update the Hessian approximation
         call update_hessian(x, g)
-        ! perform optimization iteration
-        call olbfgs_iteration(x, g, step_size, i)
+        ! output function value
+        print *, f(x)
     end do
 
 end program
