@@ -89,12 +89,10 @@ program main
   call rosenbrock_grad(x, n, g)
 
   ! initialize o-LBFGS
-  call initialize_olbfgs(x, g, n, m)
+  call initialize_olbfgs(n, m)
 
   ! optimize the function
   do i=1, num_iters
-    ! perform LBFGS iteration
-    call olbfgs_iteration(x, g, step, i)
     ! retrieve function value and gradient
     f = rosenbrock(x, n)
     call rosenbrock_grad(x, n, g)
@@ -106,6 +104,8 @@ program main
     g = g + noise_level * 2.d0*(rand - 0.5d0)*maxval(abs(g))
     ! update hessian approximation
     call update_hessian(x, g)
+    ! perform LBFGS iteration
+    call olbfgs_iteration(x, g, step, i)
     ! output progress
     print *, f
   end do 

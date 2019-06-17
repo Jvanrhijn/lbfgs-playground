@@ -127,7 +127,7 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     # create initial state
-    dim = 10
+    dim = 100
     #x0 = np.random.random(dim)
     x0 = np.ones(dim)
     x0[::2] = -1.2
@@ -135,8 +135,8 @@ if __name__ == "__main__":
     x0_scipy = deepcopy(x0)
 
     # step sizes for L-BFGS and gradient descent
-    step_size_lbfgs = 0.5
-    step_size_gd = 0.001
+    step_size_lbfgs = 0.9
+    step_size_gd = 0.003
 
     # initialize objective function with given noise level
     noise_level = 0.01
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     fnvals, fnvals_gd = [], []
 
     # create L-BFGS object
-    hist_size = 10
+    hist_size = 20
     lbfgs = LBFGS(hist_size, eps=1e-10)
 
     value, gradient = optfun(x0)
