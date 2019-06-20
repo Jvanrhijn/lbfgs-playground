@@ -84,7 +84,7 @@ program main
     x(i+1) = 1.d0
   end do
 
-  !print '("Initial objective value: ", (d10.5))', rosenbrock(x, n)
+  print '("Initial objective value: ", (d10.5))', rosenbrock(x, n)
   f = rosenbrock(x, n)
   call rosenbrock_grad(x, n, g)
 
@@ -110,7 +110,7 @@ program main
     print *, f
   end do 
 
-  !print '("Final objective function value: ", (d10.5))', rosenbrock(x, n)
+  print '("Final objective function value: ", (d10.5))', rosenbrock(x, n)
 
   ! clean up
   deallocate(x)
